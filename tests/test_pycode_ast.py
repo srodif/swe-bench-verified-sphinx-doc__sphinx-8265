@@ -53,12 +53,25 @@ from sphinx.pycode import ast
     ("+ a", "+ a"),                             # UAdd
     ("- 1", "- 1"),                             # UnaryOp
     ("- a", "- a"),                             # USub
-    ("(1, 2, 3)", "1, 2, 3"),                   # Tuple
+    ("(1, 2, 3)", "(1, 2, 3)"),                 # Tuple
     ("()", "()"),                               # Tuple (empty)
+    ("(1,)", "(1)"),                            # Tuple (single element - AST limitation)
+    ("(1, 2)", "(1, 2)"),                       # Tuple (two elements)
 ])
 def test_unparse(source, expected):
     module = ast.parse(source)
     assert ast.unparse(module.body[0].value) == expected
+
+
+def test_unparse_tuple_defaults():
+    """Test that tuple default arguments preserve parentheses."""
+    # This test specifically addresses the bug where tuple defaults
+    # lose their parentheses in function signatures
+    source = "def func(color=(1, 1, 1)): pass"
+    module = ast.parse(source)
+    func_def = module.body[0]
+    default_value = func_def.args.defaults[0]
+    assert ast.unparse(default_value) == "(1, 1, 1)"
 
 
 def test_unparse_None():
